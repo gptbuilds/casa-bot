@@ -1,6 +1,6 @@
 # casa-bot
 
-A real estate whatsapp/sms bot using twilio and langchain.
+A real estate sms bot using twilio and langchain.
 
 ## Dev
 

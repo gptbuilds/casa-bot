@@ -21,3 +21,4 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "$PWD/services/traefik/traefik.prod.toml:/etc/traefik/traefik.toml"
+      - "./logs:/home/app/logs"

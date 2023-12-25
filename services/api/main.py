@@ -55,9 +55,10 @@ async def execute_message(message: Message) -> str:
 
     for i in range(0, len(message_history.messages), 2):
         if i + 1 < len(message_history.messages):
-            memory.chat_memory.add_user_message(message_history.messages[0].content)
-            memory.chat_memory.add_user_message(message_history.messages[i + 1].content)
-
+            memory.save_context(
+                                {"input": message_history.messages[i].content}, 
+                                {"output": message_history.messages[i +  1].content}
+            )
     llm = OpenAI(temperature=0.5)
     template = """The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
 

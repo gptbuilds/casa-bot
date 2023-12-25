@@ -74,7 +74,7 @@ AI Assistant:"""
                                 memory=memory
                                 )
     ## get the result
-    conv = conversation.predict(input=message.text_message , link=message.phone_number )
+    conv =  await conversation.apredict(input=message.text_message , link=message.phone_number )
     
     return conv
     

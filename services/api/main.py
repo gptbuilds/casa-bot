@@ -18,7 +18,7 @@ class Message(BaseModel):
     phone_number: str 
     text_message: str
 
-class TestWrap:
+class TestWrap(BaseModel):
     message: Message
     password: str
 

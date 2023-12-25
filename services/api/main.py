@@ -2,14 +2,17 @@ import fastapi
 import os
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import logging
-from langchain import MongoDBChatMessageHistory, ConversationBufferMemory, OpenAI, ConversationChain, PromptTemplate
+from langchain.memory import MongoDBChatMessageHistory, ConversationBufferMemory
+from langchain.llms import OpenAI
+from langchain.chains import ConversationChain
+from langchain.prompts.prompt import PromptTemplate
 
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 app = FastAPI()
-MONGO_CONN = os.getenv("MONGO_CONNECTION_STRING")
+MONGO_CONN = os.getenv("MONGO_CONNECTION_STRING", "error")
 
 class Message(BaseModel):
     phone_number: str 

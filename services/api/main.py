@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import logging
 from langchain.memory import MongoDBChatMessageHistory, ConversationBufferMemory
-from langchain.llms import OpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 
@@ -60,7 +60,7 @@ async def execute_message(message: Message) -> str:
                                 {"input": message_history.messages[i].content}, 
                                 {"output": message_history.messages[i +  1].content}
             )
-    llm = OpenAI(temperature=0, model_name="gpt-4-1106-preview")
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
     template = """Conversational agent. You are a part of a real estate agent's smart assistant. You have access to a team of agents, they can do things, like realtor database lookup, or consult the realtor's agenda.
 You can address either the client or your team. To address client, commence message wih: `Client: ` Or `Team: `.
 

@@ -71,7 +71,7 @@ SMS Agent:"""
     
     conv =  await conversation.apredict(input=message.text_message)
 
-    message_history.add_human_message(message.text_message)
+    message_history.add_user_message(message.text_message)
     
     message_history.add_ai_message(conv)
     return conv

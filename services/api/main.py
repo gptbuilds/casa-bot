@@ -47,6 +47,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 async def execute_message(message: Message) -> str:
+    ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
         connection_string=MONGO_CONN, session_id= message.phone_number
     )
@@ -59,21 +60,23 @@ async def execute_message(message: Message) -> str:
                                 {"input": message_history.messages[i].content}, 
                                 {"output": message_history.messages[i +  1].content}
             )
-    llm = OpenAI(temperature=0.5)
-    template = """The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+    llm = OpenAI(temperature=0.5, model_name="gpt-4-1106-preview")
+    template = """You are a part of real estate agent's smart assistant. You are the conversational agent. You have access to a worker agent, he can look things up in the database, or consult the realtor's database.
 
-Current conversation:
+# Event: You received an sms message.
+# Task: Answer the sms message.
+
+
+Previous Messages:
 {history}
-Human: {input}
-SMS Agent:"""
+New SMS: {input}
+"""
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
     conv =  await conversation.apredict(input=message.text_message)
 
     message_history.add_user_message(message.text_message)
-    
     message_history.add_ai_message(conv)
-    return conv
-    
 
+    return conv

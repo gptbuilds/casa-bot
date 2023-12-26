@@ -60,8 +60,9 @@ async def execute_message(message: Message) -> str:
                                 {"input": message_history.messages[i].content}, 
                                 {"output": message_history.messages[i +  1].content}
             )
-    llm = OpenAI(temperature=0.5, model_name="gpt-4-1106-preview")
-    template = """You are a part of real estate agent's smart assistant. You are the conversational agent. You have access to a worker agent, he can look things up in the database, or consult the realtor's database.
+    llm = OpenAI(temperature=0, model_name="gpt-4-1106-preview")
+    template = """Conversational agent. You are a part of a real estate agent's smart assistant. You have access to a team of agents, they can do things, like realtor database lookup, or consult the realtor's agenda.
+You can address either the client or your team. To address client, commence message wih: `Client: ` Or `Team: `.
 
 # Event: You received an sms message.
 # Task: Answer the sms message.
@@ -74,7 +75,7 @@ New SMS: {input}
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
-    conv =  await conversation.apredict(input=message.text_message)
+    conv =  conversation.predict(input=message.text_message)
 
     message_history.add_user_message(message.text_message)
     message_history.add_ai_message(conv)

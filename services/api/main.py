@@ -116,13 +116,13 @@ Ensure all actions comply with data safety and confidentiality standards.
     regex_ai_team = r"^\*\*Action\*\*:\s*AI-Team:\s*(.*)"
     regex_realtor = r"^\*\*Action\*\*:\s*Realtor:\s*(.*)"
 
-    if re.match(regex_client, message.text_message):
+    if re.match(regex_client, strip_double_quote_if_exists(message.text_message)):
         message_history.add_ai_message(conv)
 
-    if re.match(regex_ai_team, message.text_message):
+    if re.match(regex_ai_team, strip_double_quote_if_exists(message.text_message)):
        return  await second_line_agent(conv)
 
-    if re.match(regex_realtor, message.text_message):
+    if re.match(regex_realtor, strip_double_quote_if_exists(message.text_message)):
         return await alert_realtor(message.text_message, conv)
 
     return conv
@@ -133,3 +133,6 @@ async def second_line_agent(conv: str) -> str:
 
 async def alert_realor(msg: str, conv: str) -> str:
     return "Sending sms to realtor"
+
+def strip_double_quote_if_exists(message):
+    return message[1:] if message.startswith('"') else message

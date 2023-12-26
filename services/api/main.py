@@ -52,6 +52,10 @@ async def execute_message(message: Message) -> str:
         connection_string=MONGO_CONN, session_id= message.phone_number
     )
 
+    if message.text_message == "Restart":
+        message_history.clear()
+        return "Memory cleared" 
+
     memory = ConversationBufferMemory()
 
     for i in range(0, len(message_history.messages), 2):
@@ -61,12 +65,15 @@ async def execute_message(message: Message) -> str:
                                 {"output": message_history.messages[i +  1].content}
             )
     llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
-    template = """Conversational agent. You are a part of a real estate agent's smart assistant. You have access to a team of agents, they can do things, like realtor database lookup, or consult the realtor's agenda.
-You can address either the client or your team. To address client, commence message wih: `Client: ` Or `Team: `.
+    template = """Conversational ai agent. You are a part of a real estate agent's smart assistant. You have access to a team of ai agents, they can do things, like realtor database lookup, or consult the realtor's agenda.
+You can address either the client or your team. To address client or team, commence message wih: `Client: ` Or `Team: `.
 
 # Event: You received an sms message.
 # Task: Answer the sms message.
-
+# Rules: 
+  * Never make up information.
+  * If it isn't in this prompt you don't know it. 
+  * If you don't know the answer, consult team.
 
 Previous Messages:
 {history}

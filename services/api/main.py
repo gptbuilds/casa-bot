@@ -65,17 +65,15 @@ async def execute_message(message: Message) -> str:
 Current conversation:
 {history}
 Human: {input}
-AI Assistant:"""
+SMS Agent:"""
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
-    conversation = ConversationChain(
-                                llm=llm,
-                                verbose=False,
-                                prompt = PROMPT,
-                                memory=memory
-                                )
-    ## get the result
-    conv =  await conversation.apredict(input=message.text_message)
+    conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
+    conv =  await conversation.apredict(input=message.text_message)
+
+    message_history.add_human_message(message.text_message)
+    
+    message_history.add_ai_message(conv)
     return conv
     
 

@@ -1,4 +1,5 @@
 import fastapi
+import re
 import os
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
@@ -66,7 +67,7 @@ async def execute_message(message: Message) -> str:
             )
     llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
     template = """
-## Role: AI Assistant for Real Estate
+## Role: SMS Assistant for Real Estate
 - Respond to client SMS about real estate.
 - Coordinate with AI team for specialized tasks.
 - Contact realtor in complex situations.
@@ -110,6 +111,25 @@ Ensure all actions comply with data safety and confidentiality standards.
     conv =  conversation.predict(input=message.text_message)
 
     message_history.add_user_message(message.text_message)
-    message_history.add_ai_message(conv)
+
+    regex_client = r"^\*\*Action\*\*:\s*Client:\s*(.*)"
+    regex_ai_team = r"^\*\*Action\*\*:\s*AI-Team:\s*(.*)"
+    regex_realtor = r"^\*\*Action\*\*:\s*Realtor:\s*(.*)"
+
+    if re.match(regex_client, message.text_message):
+        message_history.add_ai_message(conv)
+
+    if re.match(regex_ai_team, message.text_message):
+       return  await second_line_agent(conv)
+
+    if re.match(regex_realtor, message.text_message):
+        return await alert_realtor(message.text_message, conv)
 
     return conv
+
+async def second_line_agent(conv: str) -> str:
+    return "Calling second line agent"
+
+
+async def alert_realor(msg: str, conv: str) -> str:
+    return "Sending sms to realtor"

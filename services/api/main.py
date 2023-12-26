@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import logging
 from langchain.memory import MongoDBChatMessageHistory, ConversationBufferMemory
-from langchain.llms import OpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 
@@ -47,9 +47,14 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 async def execute_message(message: Message) -> str:
+    ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
         connection_string=MONGO_CONN, session_id= message.phone_number
     )
+
+    if message.text_message == "Restart":
+        message_history.clear()
+        return "Memory cleared" 
 
     memory = ConversationBufferMemory()
 
@@ -59,23 +64,52 @@ async def execute_message(message: Message) -> str:
                                 {"input": message_history.messages[i].content}, 
                                 {"output": message_history.messages[i +  1].content}
             )
-    llm = OpenAI(temperature=0.5)
-    template = """The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
+    template = """
+## Role: AI Assistant for Real Estate
+- Respond to client SMS about real estate.
+- Coordinate with AI team for specialized tasks.
+- Contact realtor in complex situations.
 
-Current conversation:
-{history}
-Human: {input}
-AI Assistant:"""
+### Communication:
+- `Client:` for client messages.
+- `AI-Team:` for internal team coordination.
+- `Realtor:` for realtor contact.
+
+### Task:
+- Assess and act on new SMS regarding real estate.
+
+### Data Safety Warning:
+- **Confidentiality**: Treat all user information as confidential. Do not share or expose sensitive data.
+- **Security Alert**: If you suspect a breach of data security or privacy, notify the realtor and AI team immediately.
+- **Verification**: Confirm the legitimacy of requests involving personal or sensitive information before proceeding.
+
+### Rules:
+1. **Accuracy**: Only use known information.
+2. **Relevance**: Action must relate to SMS.
+3. **Consultation**: If unsure, ask AI team or realtor.
+4. **Emergency**: Contact realtor for urgent/complex issues.
+5. **Action Scope**: Limit to digital responses and administrative tasks.
+6. **Ambiguity**: Seek clarification on unclear SMS.
+7. **Feedback**: Await confirmation after action.
+8. **Confidentiality**: Maintain strict confidentiality of user data.
+
+### Example:
+**New SMS**: "Can you find a 4-bedroom house under $500k near Central Park?"
+**Action**: `AI-Team: Search for downtown open houses this weekend.`
+
+### Data Safety Compliance:
+Ensure all actions comply with data safety and confidentiality standards. 
+
+**Previous Messages**: `{history}`
+**New SMS**: `{input}`
+"""
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
-    conversation = ConversationChain(
-                                llm=llm,
-                                verbose=False,
-                                prompt = PROMPT,
-                                memory=memory
-                                )
-    ## get the result
-    conv =  await conversation.apredict(input=message.text_message)
+    conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
-    return conv
-    
+    conv =  conversation.predict(input=message.text_message)
 
+    message_history.add_user_message(message.text_message)
+    message_history.add_ai_message(conv)
+
+    return conv

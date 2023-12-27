@@ -60,7 +60,7 @@ async def alert_client(msg: str) -> str:
 
 async def alert_realtor(msg: str, conv: str) -> str:
     return f"Sending sms to realtor "
-async def execute_message(message: Message) -> str:
+async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
         connection_string=MONGO_CONN, session_id= message.phone_number
@@ -68,7 +68,7 @@ async def execute_message(message: Message) -> str:
 
     if message.text_message == "Restart":
         message_history.clear()
-        return "Memory cleared" 
+        return ["Memory cleared"] 
 
     memory = ConversationBufferMemory()
 
@@ -129,22 +129,17 @@ Ensure all actions comply with data safety and confidentiality standards.
     
     try:
         json_obj = json.loads(json_str)
-        
+        actions = []
         for entry in json_obj:
             for key, value in entry.items():
                 if key == "Client":
-                    return await alert_client(value)
+                    actions.append(await alert_client(value))
                 if key == "Realtor":
-                    return await alert_realtor(message.text_message, conv)
+                    actions.append(await alert_realtor(message.text_message, conv))
                 if key == "AI-Team":
-                    return await second_line_agent(value)
+                    actions.append(await second_line_agent(value))
 
-        print("Valid JSON object:", json_obj)
-
+        return actions
     except json.JSONDecodeError as e:
-        print("Invalid JSON:", e)
-       
-    
-    
-    return conv
-
+        print("Invalid JSON:", e)       
+        return ["error  invalid json"]

@@ -39,7 +39,7 @@ async def incoming_sms_hook(request: Request):
 
 # This will be removed once we go live
 @app.post("/only-for-testing-agent")
-async def only_for_testing_agent(wrap: TestWrap) -> str:
+async def only_for_testing_agent(wrap: TestWrap) -> list[str]:
     if wrap.password == "BadMotherfucker":
         return await execute_message(wrap.message);
     else:

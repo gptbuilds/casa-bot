@@ -135,8 +135,11 @@ Ensure all actions comply with data safety and confidentiality standards.
             for key, value in entry.items():
                 if key == "Client":
                     actions.append(await alert_client(value))
+                    message_history.add_ai_message(value)
+
                 if key == "Realtor":
                     actions.append(await alert_realtor(value))
+
                 if key == "AI-Team":
                     actions.append(await second_line_agent(value))
 

@@ -1,4 +1,6 @@
 import fastapi
+import json
+import re
 import os
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
@@ -46,6 +48,18 @@ async def only_for_testing_agent(wrap: TestWrap) -> str:
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
+### HELPERS
+def strip_double_quote_if_exists(message):
+    return message[0:] if message.startswith('"') else message
+
+async def second_line_agent(conv: str) -> str:
+    return "Calling second line agent"
+
+async def alert_client(msg: str) -> str:
+    return f"Sending sms to client: {msg} "
+
+async def alert_realtor(msg: str, conv: str) -> str:
+    return f"Sending sms to realtor "
 async def execute_message(message: Message) -> str:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
@@ -66,15 +80,17 @@ async def execute_message(message: Message) -> str:
             )
     llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
     template = """
-## Role: AI Assistant for Real Estate
+## Role: SMS Assistant for Real Estate
 - Respond to client SMS about real estate.
 - Coordinate with AI team for specialized tasks.
 - Contact realtor in complex situations.
 
 ### Communication:
-- `Client:` for client messages.
-- `AI-Team:` for internal team coordination.
-- `Realtor:` for realtor contact.
+- Output exactly one JSON array to communicate
+- `"Client":` for client messages.
+- `"AI-Team":` for internal team coordination.
+- `"Realtor":` for realtor contact.
+-  You can output up to three objects in a JSON array
 
 ### Task:
 - Assess and act on new SMS regarding real estate.
@@ -93,10 +109,7 @@ async def execute_message(message: Message) -> str:
 6. **Ambiguity**: Seek clarification on unclear SMS.
 7. **Feedback**: Await confirmation after action.
 8. **Confidentiality**: Maintain strict confidentiality of user data.
-
-### Example:
-**New SMS**: "Can you find a 4-bedroom house under $500k near Central Park?"
-**Action**: `AI-Team: Search for downtown open houses this weekend.`
+9. **Always reply to the client, only when necessary to the realtor or AI-team
 
 ### Data Safety Compliance:
 Ensure all actions comply with data safety and confidentiality standards. 
@@ -107,9 +120,31 @@ Ensure all actions comply with data safety and confidentiality standards.
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
-    conv =  conversation.predict(input=message.text_message)
-
     message_history.add_user_message(message.text_message)
-    message_history.add_ai_message(conv)
 
+    conv =  conversation.predict(input=message.text_message)
+    json_str = conv.strip('```json\n').strip('```')
+
+
+    
+    try:
+        json_obj = json.loads(json_str)
+        
+        for entry in json_obj:
+            for key, value in entry.items():
+                if key == "Client":
+                    return await alert_client(value)
+                if key == "Realtor":
+                    return await alert_realtor(message.text_message, conv)
+                if key == "AI-Team":
+                    return await second_line_agent(value)
+
+        print("Valid JSON object:", json_obj)
+
+    except json.JSONDecodeError as e:
+        print("Invalid JSON:", e)
+       
+    
+    
     return conv
+

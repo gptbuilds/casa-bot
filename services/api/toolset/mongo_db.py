@@ -1,4 +1,4 @@
-from langchain.tools.base_tool import BaseTool
+from langchain_core.tools import BaseTool
 from langchain.document_loaders.mongodb import MongodbLoader
 from pymongo import MongoClient
 
@@ -17,7 +17,7 @@ class MongoDBTool(BaseTool):
             db_name (str): The name of the MongoDB database.
             collection_name (str): The name of the MongoDB collection.
         """
-        super().__init__()
+        super(connection_string, db_name).__init__()
         self.connection_string = connection_string
         self.db_name = db_name
         self.collection_name = collection_name

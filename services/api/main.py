@@ -52,14 +52,14 @@ if __name__ == "__main__":
 def strip_double_quote_if_exists(message):
     return message[0:] if message.startswith('"') else message
 
-async def second_line_agent(conv: str) -> str:
-    return "Calling second line agent"
+async def second_line_agent(msg: str) -> str:
+    return "Calling second line agent with query: {msg}"
 
 async def alert_client(msg: str) -> str:
     return f"Sending sms to client: {msg} "
 
-async def alert_realtor(msg: str, conv: str) -> str:
-    return f"Sending sms to realtor "
+async def alert_realtor(msg: str) -> str:
+    return f"Sending sms to realtor: {msg} "
 async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(

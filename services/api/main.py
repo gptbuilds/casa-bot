@@ -52,6 +52,13 @@ def strip_double_quote_if_exists(message):
     return message[0:] if message.startswith('"') else message
 
 ### AGENTS
+
+async def second_line_agent(conv: str) -> str:
+    return "Calling second line agent"
+
+
+async def alert_realtor(msg: str, conv: str) -> str:
+    return "Sending sms to realtor"
 async def execute_message(message: Message) -> str:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
@@ -120,21 +127,17 @@ Ensure all actions comply with data safety and confidentiality standards.
     regex_client = r"^\*\*Action\*\*:\s*Client:\s*(.*)"
     regex_ai_team = r"^\*\*Action\*\*:\s*AI-Team:\s*(.*)"
     regex_realtor = r"^\*\*Action\*\*:\s*Realtor:\s*(.*)"
+    
+    strip_msg = strip_double_quote_if_exists(message.text_message)
 
-    if re.match(regex_client, strip_double_quote_if_exists(message.text_message)):
-        message_history.add_ai_message(conv)
+    if re.match(regex_client, strip_msg):
+        message_history.add_user_message(message.text_message)
 
-    if re.match(regex_ai_team, strip_double_quote_if_exists(message.text_message)):
+    if re.match(regex_ai_team, strip_msg):
        return  await second_line_agent(conv)
 
-    if re.match(regex_realtor, strip_double_quote_if_exists(message.text_message)):
+    if re.match(regex_realtor, strip_msg):
         return await alert_realtor(message.text_message, conv)
 
     return conv
 
-async def second_line_agent(conv: str) -> str:
-    return "Calling second line agent"
-
-
-async def alert_realtor(msg: str, conv: str) -> str:
-    return "Sending sms to realtor"

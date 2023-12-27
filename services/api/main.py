@@ -47,6 +47,11 @@ async def only_for_testing_agent(wrap: TestWrap) -> str:
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
+### HELPERS
+def strip_double_quote_if_exists(message):
+    return message[0:] if message.startswith('"') else message
+
+### AGENTS
 async def execute_message(message: Message) -> str:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
@@ -131,8 +136,5 @@ async def second_line_agent(conv: str) -> str:
     return "Calling second line agent"
 
 
-async def alert_realor(msg: str, conv: str) -> str:
+async def alert_realtor(msg: str, conv: str) -> str:
     return "Sending sms to realtor"
-
-def strip_double_quote_if_exists(message):
-    return message[1:] if message.startswith('"') else message

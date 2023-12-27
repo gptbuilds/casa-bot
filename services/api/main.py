@@ -5,11 +5,15 @@ import os
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
+
 import logging
+
 from langchain.memory import MongoDBChatMessageHistory, ConversationBufferMemory
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
+from langchain.agents import load_tools, initialize_agent, AgentType
+
 
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -45,6 +49,12 @@ async def only_for_testing_agent(wrap: TestWrap) -> list[str]:
     else:
         raise HTTPException(status_code=fastapi.status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
+async def alert_client(msg: str) -> str:
+    return f"Sending sms to client: {msg} "
+
+async def alert_realtor(msg: str) -> str:
+    return f"Sending sms to realtor: {msg}"
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
@@ -53,13 +63,14 @@ def strip_double_quote_if_exists(message):
     return message[0:] if message.startswith('"') else message
 
 async def second_line_agent(msg: str) -> str:
+    llm = ChatOpenAI()
+
+    tools = load_tools(["llm-math"], llm=llm)
+
+    agent_executor = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+
     return f"Calling second line agent with query: {msg}"
 
-async def alert_client(msg: str) -> str:
-    return f"Sending sms to client: {msg} "
-
-async def alert_realtor(msg: str) -> str:
-    return f"Sending sms to realtor: {msg}"
 
 async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future

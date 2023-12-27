@@ -85,9 +85,11 @@ async def execute_message(message: Message) -> str:
 - Contact realtor in complex situations.
 
 ### Communication:
-- `Client:` for client messages.
-- `AI-Team:` for internal team coordination.
-- `Realtor:` for realtor contact.
+- Output exactly one JSON array to communicate
+- `"Client":` for client messages.
+- `"AI-Team":` for internal team coordination.
+- `"Realtor":` for realtor contact.
+-  You can output up to three objects in a JSON array
 
 ### Task:
 - Assess and act on new SMS regarding real estate.
@@ -106,10 +108,7 @@ async def execute_message(message: Message) -> str:
 6. **Ambiguity**: Seek clarification on unclear SMS.
 7. **Feedback**: Await confirmation after action.
 8. **Confidentiality**: Maintain strict confidentiality of user data.
-
-### Example:
-**New SMS**: "Can you find a 4-bedroom house under $500k near Central Park?"
-**Action**: `AI-Team: Search for downtown open houses this weekend.`
+9. **Always reply to the client, only when necessary to the realtor or AI-team
 
 ### Data Safety Compliance:
 Ensure all actions comply with data safety and confidentiality standards. 
@@ -121,23 +120,11 @@ Ensure all actions comply with data safety and confidentiality standards.
     conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
     conv =  conversation.predict(input=message.text_message)
+    conv_parsed = ""
 
     message_history.add_user_message(message.text_message)
+    message_history.add_user_message(message.text_message)
 
-    regex_client = r"\*\*Action\*\*:\s*`Client:"
-    regex_ai_team = r"\*\*Action\*\*:\s*`AI"
-    regex_realtor = r"\*\*Action\*\*:\s*`Realtor"
     
-    strip_msg = strip_double_quote_if_exists(message.text_message)
-
-    if re.match(regex_client, strip_msg):
-        message_history.add_user_message(message.text_message)
-
-    if re.match(regex_ai_team, strip_msg):
-       return  await second_line_agent(conv)
-
-    if re.match(regex_realtor, strip_msg):
-        return await alert_realtor(message.text_message, conv)
-
     return conv
 

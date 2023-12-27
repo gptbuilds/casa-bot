@@ -52,14 +52,14 @@ if __name__ == "__main__":
 def strip_double_quote_if_exists(message):
     return message[0:] if message.startswith('"') else message
 
-### AGENTS
-
 async def second_line_agent(conv: str) -> str:
     return "Calling second line agent"
 
+async def alert_client(msg: str) -> str:
+    return f"Sending sms to client: {msg} "
 
 async def alert_realtor(msg: str, conv: str) -> str:
-    return "Sending sms to realtor"
+    return f"Sending sms to realtor "
 async def execute_message(message: Message) -> str:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
@@ -120,27 +120,30 @@ Ensure all actions comply with data safety and confidentiality standards.
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
+    message_history.add_user_message(message.text_message)
+
     conv =  conversation.predict(input=message.text_message)
     json_str = conv.strip('```json\n').strip('```')
 
+
+    
     try:
         json_obj = json.loads(json_str)
         
         for entry in json_obj:
             for key, value in entry.items():
                 if key == "Client":
-                    print(f"Client message: {value}")
-                elif key == "Realtor":
-                    print(f"Realtor message: {value}")
-                else:
-                    print(f"Other message ({key}): {value}")
+                    return await alert_client(value)
+                if key == "Realtor":
+                    return await alert_realtor(message.text_message, conv)
+                if key == "AI-Team":
+                    return await second_line_agent(value)
 
         print("Valid JSON object:", json_obj)
 
     except json.JSONDecodeError as e:
         print("Invalid JSON:", e)
-        message_history.add_user_message(message.text_message)
-
+       
     
     
     return conv

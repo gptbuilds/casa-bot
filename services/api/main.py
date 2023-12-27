@@ -124,7 +124,7 @@ Ensure all actions comply with data safety and confidentiality standards.
     json_str = conv.strip('```json\n').strip('```')
 
     try:
-        json_obj = json.loads(conv)
+        json_obj = json.loads(json_str)
         
         for entry in json_obj:
             for key, value in entry.items():

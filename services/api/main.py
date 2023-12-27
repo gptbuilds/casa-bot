@@ -124,9 +124,9 @@ Ensure all actions comply with data safety and confidentiality standards.
 
     message_history.add_user_message(message.text_message)
 
-    regex_client = r"^\*\*Action\*\*:\s*Client:\s*(.*)"
-    regex_ai_team = r"^\*\*Action\*\*:\s*AI-Team:\s*(.*)"
-    regex_realtor = r"^\*\*Action\*\*:\s*Realtor:\s*(.*)"
+    regex_client = r"\*\*Action\*\*:\s*`Client:"
+    regex_ai_team = r"\*\*Action\*\*:\s*`AI"
+    regex_realtor = r"\*\*Action\*\*:\s*`Realtor"
     
     strip_msg = strip_double_quote_if_exists(message.text_message)
 

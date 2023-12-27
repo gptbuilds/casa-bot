@@ -59,7 +59,8 @@ async def alert_client(msg: str) -> str:
     return f"Sending sms to client: {msg} "
 
 async def alert_realtor(msg: str) -> str:
-    return f"Sending sms to realtor: {msg} "
+    return f"Sending sms to realtor: {msg}"
+
 async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
@@ -135,7 +136,7 @@ Ensure all actions comply with data safety and confidentiality standards.
                 if key == "Client":
                     actions.append(await alert_client(value))
                 if key == "Realtor":
-                    actions.append(await alert_realtor(message.text_message, conv))
+                    actions.append(await alert_realtor(message.text_message))
                 if key == "AI-Team":
                     actions.append(await second_line_agent(value))
 

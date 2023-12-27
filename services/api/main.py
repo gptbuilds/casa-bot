@@ -53,7 +53,7 @@ def strip_double_quote_if_exists(message):
     return message[0:] if message.startswith('"') else message
 
 async def second_line_agent(msg: str) -> str:
-    return "Calling second line agent with query: {msg}"
+    return f"Calling second line agent with query: {msg}"
 
 async def alert_client(msg: str) -> str:
     return f"Sending sms to client: {msg} "

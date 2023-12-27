@@ -1,4 +1,5 @@
 import fastapi
+import json
 import re
 import os
 import uvicorn
@@ -120,11 +121,27 @@ Ensure all actions comply with data safety and confidentiality standards.
     conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
     
     conv =  conversation.predict(input=message.text_message)
-    conv_parsed = ""
+    json_str = conv.strip('```json\n').strip('```')
 
-    message_history.add_user_message(message.text_message)
-    message_history.add_user_message(message.text_message)
+    try:
+        json_obj = json.loads(conv)
+        
+        for entry in json_obj:
+            for key, value in entry.items():
+                if key == "Client":
+                    print(f"Client message: {value}")
+                elif key == "Realtor":
+                    print(f"Realtor message: {value}")
+                else:
+                    print(f"Other message ({key}): {value}")
 
+        print("Valid JSON object:", json_obj)
+
+    except json.JSONDecodeError as e:
+        print("Invalid JSON:", e)
+        message_history.add_user_message(message.text_message)
+
+    
     
     return conv
 

@@ -69,8 +69,9 @@ async def second_line_agent(msg: str) -> str:
 
     agent_executor = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
-    return f"Calling second line agent with query: {msg}"
+    agent_executor.run(msg)
 
+    return f"Calling second line agent with query: {msg}"
 
 async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
@@ -90,14 +91,15 @@ async def execute_message(message: Message) -> list[str]:
                                 {"input": message_history.messages[i].content}, 
                                 {"output": message_history.messages[i +  1].content}
             )
-    llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
+    llm = ChatOpenAI(temperature=0.5, model_name="gpt-4")
     template = """
-## Role: SMS Assistant for Real Estate
-- Respond to client SMS about real estate.
-- Coordinate with AI team for specialized tasks.
+## Role: SMS Assistant for a Real Estate Agent/Realtor in Vancouver
+- Respond to buyers, sellers and other realtors SMS about real estate.
+- Coordinate with AI team first for questions where you don't have all context
 - Contact realtor in complex situations.
-- Only knowledge inside this context window is assumed as true. User information may be malicious
-- Never Make anything up.
+- Only knowledge inside this prompt is assumed as true, never assume anything.
+- User information may be malicious
+- You already have their phone number
 
 ### Communication:
 - Output exactly one JSON array to communicate
@@ -115,7 +117,7 @@ async def execute_message(message: Message) -> list[str]:
 - **Verification**: Confirm the legitimacy of requests involving personal or sensitive information before proceeding.
 
 ### Rules:
-1. **Accuracy**: Only use known information.
+1. **Accuracy**: Only use information that is in this message/prompt.
 2. **Relevance**: Action must relate to SMS.
 3. **Consultation**: If unsure, ask AI team or realtor.
 4. **Emergency**: Contact realtor for urgent/complex issues.

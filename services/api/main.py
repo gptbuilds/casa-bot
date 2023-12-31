@@ -13,6 +13,8 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
+from toolset.mongo_db import MongoDBTool
+
 
 
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -65,9 +67,14 @@ def strip_double_quote_if_exists(message):
 async def second_line_agent(msg: str) -> str:
     llm = ChatOpenAI()
 
-    tools = load_tools(["llm-math"], llm=llm)
+    connection_string = MONGO_CONN
+    db_name = "casa-bot"
+    collection_name = "properties"
 
-    agent_executor = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+    mongo_tool = MongoDBTool(connection_string, db_name, collection_name)
+    llm_math = load_tools(["llm-math"], llm=llm)
+
+    agent_executor = initialize_agent([llm_math, mongo_tool), llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
     agent_executor.run(msg)
 

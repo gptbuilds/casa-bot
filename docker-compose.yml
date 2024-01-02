@@ -1,9 +1,10 @@
 version: '3.8'
 
 services:
-  web:
+  # First/Second Line Agent Service
+  fastapi-web:
     build:
-       context: ./services/api
+      context: ./services/api
     command: gunicorn main:app --bind 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker
     environment:
       - MONGO_CONNECTION_STRING=${MONGO_CONNECTION_STRING}
@@ -14,11 +15,36 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.fastapi.rule=Host(`fastapi.localhost`)"
 
+  # Web Service - Backend 
+  web-service:
+    build:
+      context: ./services/web_service
+    ports:
+      - "8085:8085"
+
+  # PostgreSQL Database
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: mcd0056
+      POSTGRES_PASSWORD: 6060
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./Database:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+
+  # Traefik Service
   traefik:
     image: traefik:v2.10.7
     ports:
       - "81:81"
-      - "8080:8080"
+      - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "$PWD/services/traefik/traefik.dev.toml:/etc/traefik/traefik.toml"
+      - "./services/traefik/traefik.dev.toml:/etc/traefik/traefik.toml"
+      - "./logs:/home/app/logs"
+
+volumes:
+  postgres_data:

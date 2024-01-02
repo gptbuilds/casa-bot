@@ -4,7 +4,8 @@ services:
   web:
     build:
        context: ./services/api
-    command: gunicorn main:app --bind 0.0.0.0:5000 -w 4 -k uvicorn.workers.UvicornWorker
+    command: gunicorn main:app --bind 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker
+
     environment:
       - MONGO_CONNECTION_STRING=${MONGO_CONNECTION_STRING}
       - OPENAI_API_KEY=${OPENAI_API_KEY}

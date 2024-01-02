@@ -14,6 +14,8 @@ from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
 
+from toolset.second_agent import execute_second_line_agent
+
 
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -62,14 +64,11 @@ if __name__ == "__main__":
 def strip_double_quote_if_exists(message):
     return message[0:] if message.startswith('"') else message
 
+
 async def second_line_agent(msg: str) -> str:
-    llm = ChatOpenAI()
-
-    tools = load_tools(["llm-math"], llm=llm)
-
-    agent_executor = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
-
-    return f"Calling second line agent with query: {msg}"
+    result = execute_second_line_agent(action_input=msg)
+    print("second line agent called")
+    return result
 
 
 async def execute_message(message: Message) -> list[str]:

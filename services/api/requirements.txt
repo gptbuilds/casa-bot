@@ -5,3 +5,11 @@ uvicorn==0.25.0
 twilio==8.11.0
 pymongo[srv]==4.6.1
 openai==1.6.1
+sqlalchemy
+langchain-community==0.0.6
+langchain-core==0.1.4
+langchainhub==0.1.14
+langdetect==1.0.9
+langsmith==0.0.75
+requests
+python-dotenv

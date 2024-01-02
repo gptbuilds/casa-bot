@@ -4,29 +4,48 @@ A real estate sms bot using twilio and langchain.
 
 ## Dev
 
-`docker compose up --build`
+docker compose up --build
 
-To smoke test:
+docker exec -it casa-bot-1-db-1 psql -U mcd0056 -d mydb
 
-`curl -H Host:fastapi.localhost http://0.0.0.0:81/ping`
+Run SQL command
+CREATE TABLE IF NOT EXISTS properties (
+    id SERIAL PRIMARY KEY,
+    position INT,
+    price VARCHAR(100),
+    bedrooms VARCHAR(50),
+    bathroom VARCHAR(50),
+    area_sqft VARCHAR(100),
+    description TEXT,
+    address TEXT,
+    other_info TEXT,
+    image_url TEXT,
+    detail_link TEXT
+);
 
-Note it's running on port 81 because I had some other service running on
-port 80 already. This is not the case in prod.
+run main.py in Database\DB_Script to upload data to DB
 
-To speak with the agent:
-```
-curl -X POST "http://0.0.0.0:81/only-for-testing-agent" \
-     -H "Host: fastapi.localhost" \
-     -H "Content-Type: application/json" \
-     -d '{
+docker compose down 
+docker compose up -d
+
+query DB
+curl --location 'http://localhost:8085/properties' \
+--data ''
+
+Test Agent
+
+curl --location 'http://fastapi.localhost:81/only-for-testing-agent' \
+--header 'Content-Type: application/json' \
+--data '{
            "message": {
-             "phone_number": "123456789",
-             "text_message": "Hello, this is a test message"
+             "phone_number": "9995623",
+             "text_message": "Can you talk with the AI Team and Find a house with 3 bedrooms?"
            },
            "password": "BadMotherfucker"
          }'
 
-```
+
+
 ## Prod
 
 `docker-compose -f docker-compose.prod.yml up --build`

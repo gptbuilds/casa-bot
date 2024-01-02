@@ -13,3 +13,4 @@ langdetect==1.0.9
 langsmith==0.0.75
 requests
 python-dotenv
+aiohttp

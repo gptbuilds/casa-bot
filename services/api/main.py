@@ -110,7 +110,7 @@ async def execute_message(message: Message) -> list[str]:
 - `"AI-Team":` for internal team coordination.
 
 example:
-[
+`[
    {
      "AI-Team": "Message to AI-Team"
    },
@@ -121,7 +121,7 @@ example:
     "Client": "Message to Realtor"
    }
 
-]
+]`
 ### Task:
 - Assess and act on new SMS regarding real estate.
 

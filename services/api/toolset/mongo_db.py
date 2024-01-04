@@ -1,22 +1,20 @@
+import os
 from langchain_core.pydantic_v1 import BaseSettings
 import motor.motor_asyncio
 from typing import Optional, Type
 from pydantic import BaseModel, Field
+
 from langchain.tools import BaseTool
+from pydantic import BaseModel, BaseSettings, Field
 
 class MongoDBQuerySchema(BaseModel):
     query: Optional[dict] = Field(default=None, description="MongoDB query.")
 
-class MongoDBQueryTool(BaseTool, BaseSettings):
+class MongoDBQueryTool(BaseTool):
     name: str = "mongo_db_query_properties_tool"
     description: str = "A tool for performing query operations on the 'properties' collection in MongoDB asynchronously."
     args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
     client: motor.motor_asyncio.AsyncIOMotorClient
-
-    def __init__(self, mongo_uri):
-        self.client = motor.motor_asyncio.AsyncIOMotorClient(mongo_uri)
-        self.db = self.client["casa"]
-        self.collection = self.db["properties"]
 
     async def _arun(
         self,
@@ -39,7 +37,10 @@ class MongoDBQueryTool(BaseTool, BaseSettings):
                 "_id": "6596c6ce7e7ab29d9c7a2dd6",
                 "id": "6596c6ce7e7ab29d9c7a2dd6"
             }`"""
-        documents = await self.collection.find(query).to_list(length=100)
+        client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_CONNECTION_STRING"))
+        db = client["casa"]
+        collection = db["properties"]
+        documents = await collection.find(query).to_list(length=100)
         return {"result": documents}
 
     async def _run(

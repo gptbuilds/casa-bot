@@ -144,7 +144,7 @@ Ensure all actions comply with data safety and confidentiality standards.
     conv =  conversation.predict(input=message.text_message)
     json_str = conv.strip('```json\n').strip('```')
 
-
+    print(json_str)
     
     try:
         json_obj = json.loads(json_str)

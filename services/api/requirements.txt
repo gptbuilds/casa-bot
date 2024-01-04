@@ -3,6 +3,6 @@ gunicorn==21.2.0
 langchain==0.0.352
 uvicorn==0.25.0
 twilio==8.11.0
-pymongo[srv]==4.6.1
 openai==1.6.1
 numexpr==2.8.8
+motor==3.3.2

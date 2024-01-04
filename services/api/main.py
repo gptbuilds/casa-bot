@@ -13,7 +13,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
-from toolset.mongo_db import MongoDBTool
+from toolset.mongo_db import MongoDBQueryTool
 
 
 
@@ -67,18 +67,13 @@ def strip_double_quote_if_exists(message):
 async def second_line_agent(msg: str) -> str:
     llm = ChatOpenAI()
 
-    connection_string = MONGO_CONN
-    db_name = "casa-bot"
-    collection_name = "properties"
+    mongo_tool = MongoDBQueryTool(MONGO_CONN)
 
-    mongo_tool = MongoDBTool(connection_string, db_name, collection_name)
-    llm_math = load_tools(["llm-math"], llm=llm)
+    agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
-    agent_executor = initialize_agent([llm_math, mongo_tool), llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+    res = await agent_executor.arun(msg)
 
-    agent_executor.run(msg)
-
-    return f"Calling second line agent with query: {msg}"
+    return f"Calling second line agent with query: {msg}, result: {res}"
 
 async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
@@ -111,9 +106,9 @@ async def execute_message(message: Message) -> list[str]:
 ### Communication:
 - Output exactly one JSON array to communicate
 - `"Client":` for client messages.
-- `"AI-Team":` for internal team coordination.
 - `"Realtor":` for realtor contact.
--  You can output up to three objects in a JSON array
+- `"AI-Team":` for internal team coordination.
+- When you communicate with the AI-team you will get a second chance to communicate with the client
 
 ### Task:
 - Assess and act on new SMS regarding real estate.

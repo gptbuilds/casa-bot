@@ -109,7 +109,6 @@ async def execute_message(message: Message) -> list[str]:
 - `"Realtor":` for realtor contact.
 - `"AI-Team":` for internal team coordination.
 - You can output a maximum of 3 objects in the json array
-- When you communicate with the AI-team you will get a second chance to communicate with the client
 
 ### Task:
 - Assess and act on new SMS regarding real estate.

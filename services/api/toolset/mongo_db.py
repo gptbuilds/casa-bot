@@ -1,11 +1,10 @@
 import os
-from langchain_core.pydantic_v1 import BaseSettings
 import motor.motor_asyncio
 from typing import Optional, Type
 from pydantic import BaseModel, Field
 
 from langchain.tools import BaseTool
-from pydantic import BaseModel, BaseSettings, Field
+from pydantic import BaseModel, Field
 
 class MongoDBQuerySchema(BaseModel):
     query: Optional[dict] = Field(default=None, description="MongoDB query.")

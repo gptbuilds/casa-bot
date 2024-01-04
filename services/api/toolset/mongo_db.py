@@ -20,5 +20,13 @@ class MongoDBQueryTool(BaseTool):
         self,
         query: Optional[dict] = None,
     ) -> dict:
+        """Run the tool"""
         documents = await self.collection.find(query).to_list(length=100)
         return {"result": documents}
+
+    async def _run(
+        self,
+        query: Optional[dict] = None,
+    ) -> dict:
+        """Not implemented"""
+        raise NotImplementedError("Tool does not support sync")

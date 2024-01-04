@@ -1,3 +1,4 @@
+from langchain_core.pydantic_v1 import BaseSettings
 import motor.motor_asyncio
 from typing import Optional, Type
 from pydantic import BaseModel, Field
@@ -6,7 +7,7 @@ from langchain.tools import BaseTool
 class MongoDBQuerySchema(BaseModel):
     query: Optional[dict] = Field(default=None, description="MongoDB query.")
 
-class MongoDBQueryTool(BaseTool):
+class MongoDBQueryTool(BaseTool, BaseSettings):
     name: str = "mongo_db_query_properties_tool"
     description: str = "A tool for performing query operations on the 'properties' collection in MongoDB asynchronously."
     args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 

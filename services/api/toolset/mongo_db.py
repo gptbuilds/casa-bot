@@ -14,7 +14,6 @@ class MongoDBQueryTool(BaseTool):
     name: str = "mongo_db_query_properties_tool"
     description: str = "A tool for performing query operations on the 'properties' collection in MongoDB asynchronously."
     args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
-    client: motor.motor_asyncio.AsyncIOMotorClient
 
     async def _arun(
         self,

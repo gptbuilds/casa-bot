@@ -12,7 +12,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
-from toolset.mongo_db import GetHuggingFaceModelsTool
+from toolset.mongo_db import MongoDBQueryTool
 
 
 
@@ -66,7 +66,7 @@ def strip_double_quote_if_exists(message):
 async def second_line_agent(msg: str) -> str:
     llm = ChatOpenAI()
 
-    mongo_tool = GetHuggingFaceModelsTool()
+    mongo_tool = MongoDBQueryTool()
 
     agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 

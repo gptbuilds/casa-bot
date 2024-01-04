@@ -93,7 +93,7 @@ async def execute_message(message: Message) -> list[str]:
                                 {"input": message_history.messages[i].content}, 
                                 {"output": message_history.messages[i +  1].content}
             )
-    llm = ChatOpenAI(temperature=0.5, model_name="gpt-4")
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4")
     template = """
 ## Role: SMS Assistant for a Real Estate Agent/Realtor in Vancouver
 - Respond to buyers, sellers and other realtors SMS about real estate.

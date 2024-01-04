@@ -20,7 +20,23 @@ class MongoDBQueryTool(BaseTool):
         self,
         query: Optional[dict] = None,
     ) -> dict:
-        """Run the tool"""
+        """Query the database with your query. Example document:
+            `{
+                "Address": "1006 13387 OLD YALE ROAD",
+                "S/A": "Whalley",
+                "List Price": "$519,000",
+                "Days On Market": "15",
+                "Tot BR": "1",
+                "Tot Baths": "1",
+                "TotFlArea": "495",
+                "Yr Blt": "2023",
+                "Age": "0",
+                "TotalPrkng": "1",
+                "MaintFee": "$0.00",
+                "TypeDwel": "Apartment/Condo",
+                "_id": "6596c6ce7e7ab29d9c7a2dd6",
+                "id": "6596c6ce7e7ab29d9c7a2dd6"
+            }`"""
         documents = await self.collection.find(query).to_list(length=100)
         return {"result": documents}
 

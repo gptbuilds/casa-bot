@@ -69,7 +69,7 @@ async def second_line_agent(msg: str) -> str:
 
     mongo_tool = MongoDBQueryTool(MONGO_CONN)
 
-    agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=False)
+    agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
     res = await agent_executor.arun(msg)
 

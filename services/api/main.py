@@ -1,6 +1,5 @@
 import fastapi
 import json
-import re
 import os
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException

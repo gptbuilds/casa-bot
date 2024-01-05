@@ -11,7 +11,9 @@ class MongoDBQuerySchema(BaseModel):
 
 class MongoDBQueryPropertiesTool(BaseTool):
     name: str = "mongo_db_query_properties_tool"
-    description: str = """A tool for performing query operations on the 'properties' collection in MongoDB asynchronously.  Example document:
+    description: str = """A tool for performing query operations on the 'properties' collection in MongoDB asynchronously. All properties are in vancouver
+    Use this as backup when other tools are insufficient for the request.
+        Example document:
             `{{
                 "Address": "1006 13387 OLD YALE ROAD",
                 "S/A": "Whalley",
@@ -47,3 +49,36 @@ class MongoDBQueryPropertiesTool(BaseTool):
     ) -> dict:
         """Not implemented"""
         raise NotImplementedError("Tool does not support sync")
+
+class MongoDBSearchAddressCaseInsensitive(BaseTool):
+    name: str = "mongo_db_search_address_tool"
+    description: str = """A tool for searching through the addresses with a string on the 'properties'. Use this when you need to look for a specific address"""
+    args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
+
+    async def _arun(
+        self,
+        address_search_string: str,
+    ) -> dict:
+        """Find properties with a similar address"""
+        client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_CONNECTION_STRING"))
+        db = client["casa"]
+        collection = db["properties"]
+
+        query = {
+            "Address": {
+                "$regex": address_search_string,
+                "$options": "i"  # Case-insensitive search
+            }
+        }
+
+        documents = await collection.find(query).to_list(length=100)
+
+        return {"result": documents}
+
+    async def _run(
+        self,
+        address_search_string: str,
+    ) -> dict:
+        """Not implemented"""
+        raise NotImplementedError("Tool does not support sync")
+

@@ -13,7 +13,7 @@ from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
 
-from toolset.mongo_db import MongoDBQueryPropertiesTool
+from toolset.mongo_db import MongoDBQueryPropertiesTool, MongoDBSearchAddressCaseInsensitive
 
 from twilio.request_validator import RequestValidator
 
@@ -66,8 +66,8 @@ async def second_line_agent(msg: str) -> str:
     llm = ChatOpenAI()
 
     mongo_tool = MongoDBQueryPropertiesTool()
-
-    agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+    specific_address = MongoDBSearchAddressCaseInsensitive()
+    agent_executor = initialize_agent([mongo_tool, specific_address], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
     return await agent_executor.arun(msg)
 

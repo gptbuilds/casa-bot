@@ -9,17 +9,10 @@ from pydantic import BaseModel, Field
 class MongoDBQuerySchema(BaseModel):
     query: Optional[dict] = Field(default=None, description="MongoDB query.")
 
-class MongoDBQueryTool(BaseTool):
+class MongoDBQueryPropertiesTool(BaseTool):
     name: str = "mongo_db_query_properties_tool"
-    description: str = "A tool for performing query operations on the 'properties' collection in MongoDB asynchronously."
-    args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
-
-    async def _arun(
-        self,
-        query: Optional[dict] = None,
-    ) -> dict:
-        """Query the database with your query. Example document:
-            `{
+    description: str = """A tool for performing query operations on the 'properties' collection in MongoDB asynchronously.  Example document:
+            `{{
                 "Address": "1006 13387 OLD YALE ROAD",
                 "S/A": "Whalley",
                 "List Price": "$519,000",
@@ -34,7 +27,14 @@ class MongoDBQueryTool(BaseTool):
                 "TypeDwel": "Apartment/Condo",
                 "_id": "6596c6ce7e7ab29d9c7a2dd6",
                 "id": "6596c6ce7e7ab29d9c7a2dd6"
-            }`"""
+            }}`"""
+    args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
+
+    async def _arun(
+        self,
+        query: Optional[dict] = None,
+    ) -> dict:
+        """Query the database with your query."""
         client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_CONNECTION_STRING"))
         db = client["casa"]
         collection = db["properties"]

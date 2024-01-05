@@ -12,7 +12,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
-from toolset.mongo_db import MongoDBQueryTool
+from toolset.mongo_db import MongoDBQueryPropertiesTool
 
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 async def second_line_agent(msg: str) -> str:
     llm = ChatOpenAI()
 
-    mongo_tool = MongoDBQueryTool()
+    mongo_tool = MongoDBQueryPropertiesTool()
 
     agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 

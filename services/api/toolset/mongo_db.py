@@ -50,10 +50,13 @@ class MongoDBQueryPropertiesTool(BaseTool):
         """Not implemented"""
         raise NotImplementedError("Tool does not support sync")
 
+class MongoDBSearchAddressCaseInsensitiveQuerySchema(BaseModel):
+    address_search_string: str = Field(description="An address")
+
 class MongoDBSearchAddressCaseInsensitive(BaseTool):
     name: str = "mongo_db_search_address_tool"
-    description: str = """A tool for searching through the addresses with a string on the 'properties'. Use this when you need to look for a specific address"""
-    args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
+    description: str = """A tool for searching through the addresses with a string on the 'properties'. Use this when you need to look for a specific address."""
+    args_schema: Type[MongoDBSearchAddressCaseInsensitiveQuerySchema] = MongoDBSearchAddressCaseInsensitiveQuerySchema
 
     async def _arun(
         self,

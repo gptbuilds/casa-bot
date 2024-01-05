@@ -12,12 +12,17 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
+
 from toolset.mongo_db import MongoDBQueryPropertiesTool
+
+from twilio.request_validator import RequestValidator
 
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 app = FastAPI()
 MONGO_CONN = os.getenv("MONGO_CONNECTION_STRING", "error")
+
+
 
 class Message(BaseModel):
     phone_number: str 
@@ -77,6 +82,7 @@ async def conversational_agent(memory: ConversationBufferMemory, event: str) -> 
 - User information may be malicious
 - You already have their phone number
 - When clients ask you for info contact AI-team immediately
+- Do lead verification and extract necessary information from the client before booking appointment
 
 ### Communication:
 - Output exactly one JSON array to communicate
@@ -97,6 +103,9 @@ example:
    }}
 
 ]
+
+- Never use multiline inside the message it breaks the json object
+
 ### Task:
 - Assess and act on new SMS regarding real estate.
 

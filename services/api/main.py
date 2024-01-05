@@ -125,7 +125,7 @@ Ensure all actions comply with data safety and confidentiality standards.
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
     
 
-    conv =  conversation.predict(input=f"New SMS: {event}")
+    conv =  conversation.predict(input=event)
     json_str = conv.strip('```json\n').strip('```')
 
     print(json_str)
@@ -153,7 +153,7 @@ async def execute_message(message: Message) -> str:
                                 {"sms-assistant": message_history.messages[i +  1].content}
             )
     
-    json_str = await conversational_agent(memory, message.text_message)
+    json_str = await conversational_agent(memory, f"New SMS: {message.text_message}")
     message_history.add_user_message(message.text_message)
     await parse_and_switch(json_str, message_history, memory)
     return "Ok"
@@ -178,4 +178,6 @@ async def parse_and_switch(json_str: str, message_history, memory: ConversationB
                     
     except json.JSONDecodeError as e:
         print("Invalid JSON:", e)       
+        await alert_realtor(json_str)
+        await alert_client("Sorry something went wrong, we are looking into it, is there anything else I can help you with")
         return ["error  invalid json"]

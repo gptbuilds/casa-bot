@@ -42,17 +42,17 @@ async def incoming_sms_hook(request: Request):
 
 # This will be removed once we go live
 @app.post("/only-for-testing-agent")
-async def only_for_testing_agent(wrap: TestWrap) -> list[str]:
+async def only_for_testing_agent(wrap: TestWrap) -> str:
     if wrap.password == "BadMotherfucker":
         return await execute_message(wrap.message);
     else:
         raise HTTPException(status_code=fastapi.status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
-async def alert_client(msg: str) -> str:
-    return f"Sending sms to client: {msg} "
+async def alert_client(msg: str):
+    print(f"Sending sms to client: {msg}")
 
-async def alert_realtor(msg: str) -> str:
-    return f"Sending sms to realtor: {msg}"
+async def alert_realtor(msg: str):
+    print(f"Sending sms to realtor: {msg}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
@@ -66,25 +66,7 @@ async def second_line_agent(msg: str) -> str:
 
     return await agent_executor.arun(msg)
 
-
-async def execute_message(message: Message) -> list[str]:
-    ### Not Async Will cause trouble in future
-    message_history = MongoDBChatMessageHistory(
-        connection_string=MONGO_CONN, session_id= message.phone_number
-    )
-
-    if message.text_message == "Restart":
-        message_history.clear()
-        return ["Memory cleared"] 
-
-    memory = ConversationBufferMemory()
-
-    for i in range(0, len(message_history.messages), 2):
-        if i + 1 < len(message_history.messages):
-            memory.save_context(
-                                {"input": message_history.messages[i].content}, 
-                                {"output": message_history.messages[i +  1].content}
-            )
+async def conversational_agent(memory: ConversationBufferMemory, event: str) -> str:
     llm = ChatOpenAI(temperature=0, model_name="gpt-4")
     template = """
 ## Role: SMS Assistant for a Real Estate Agent/Realtor in Vancouver
@@ -142,31 +124,58 @@ Ensure all actions comply with data safety and confidentiality standards.
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
     
-    message_history.add_user_message(message.text_message)
 
-    conv =  conversation.predict(input=f"New SMS: {message.text_message}")
+    conv =  conversation.predict(input=f"New SMS: {event}")
     json_str = conv.strip('```json\n').strip('```')
 
     print(json_str)
+
+    return json_str
+
+
+
+async def execute_message(message: Message) -> str:
+    ### Not Async Will cause trouble in future
+    message_history = MongoDBChatMessageHistory(
+        connection_string=MONGO_CONN, session_id= message.phone_number
+    )
+
+    if message.text_message == "Restart":
+        message_history.clear()
+        return "Memory cleared" 
+
+    memory = ConversationBufferMemory()
+
+    for i in range(0, len(message_history.messages), 2):
+        if i + 1 < len(message_history.messages):
+            memory.save_context(
+                                {"client": message_history.messages[i].content}, 
+                                {"sms-assistant": message_history.messages[i +  1].content}
+            )
     
+    json_str = await conversational_agent(memory, message.text_message)
+    message_history.add_user_message(message.text_message)
+    await parse_and_switch(json_str, message_history, memory)
+    return "Ok"
+
+async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory):
     try:
         json_obj = json.loads(json_str)
-        actions = []
         for entry in json_obj:
             for key, value in entry.items():
                 if key == "Client":
-                    actions.append(await alert_client(value))
+                    await alert_client(value)
                     message_history.add_ai_message(value)
 
                 if key == "Realtor":
-                    actions.append(await alert_realtor(value))
+                    await alert_realtor(value)
 
                 if key == "AI-Team":
-                    res = await second_line_agent(value)
-                    await execute_message(message)
+                    res_second_line = await second_line_agent(value)
+                    res_conv = await conversational_agent(memory, f"AI-Team Response: {res_second_line}")
+                    await parse_and_switch(res_conv, message_history, memory)
+        
                     
-
-        return actions
     except json.JSONDecodeError as e:
         print("Invalid JSON:", e)       
         return ["error  invalid json"]

@@ -14,8 +14,6 @@ from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
 from toolset.mongo_db import MongoDBQueryTool
 
-
-
 logging.basicConfig(filename='/home/app/logs/print.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 app = FastAPI()
@@ -59,10 +57,6 @@ async def alert_realtor(msg: str) -> str:
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-### HELPERS
-def strip_double_quote_if_exists(message):
-    return message[0:] if message.startswith('"') else message
-
 async def second_line_agent(msg: str) -> str:
     llm = ChatOpenAI()
 
@@ -70,9 +64,8 @@ async def second_line_agent(msg: str) -> str:
 
     agent_executor = initialize_agent([mongo_tool], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
-    res = await agent_executor.arun(msg)
+    return await agent_executor.arun(msg)
 
-    return f"Calling second line agent with query: {msg}, result: {res}"
 
 async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
@@ -141,13 +134,13 @@ example:
 8. **Confidentiality**: Maintain strict confidentiality of user data.
 
 ### Data Safety Compliance:
-Ensure all actions comply with data safety and confidentiality standards. 
+Ensure all actions comply with data safety and confidentiality standards.
 
 **Previous Messages**: `{history}`
 **New SMS**: `{input}`
 """
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
-    conversation = ConversationChain(llm=llm, verbose=False, prompt = PROMPT, memory=memory)
+    conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
     
     message_history.add_user_message(message.text_message)
 
@@ -169,7 +162,10 @@ Ensure all actions comply with data safety and confidentiality standards.
                     actions.append(await alert_realtor(value))
 
                 if key == "AI-Team":
-                    actions.append(await second_line_agent(value))
+                    res = await second_line_agent(value)
+                    message_history.add_ai_message(res)
+                    await execute_message(message)
+                    
 
         return actions
     except json.JSONDecodeError as e:

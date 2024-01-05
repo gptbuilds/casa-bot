@@ -137,14 +137,14 @@ example:
 Ensure all actions comply with data safety and confidentiality standards.
 
 **Previous Messages**: `{history}`
-**New SMS**: `{input}`
+**Event**:`{input}`
 """
     PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
     
     message_history.add_user_message(message.text_message)
 
-    conv =  conversation.predict(input=message.text_message)
+    conv =  conversation.predict(input=f"New SMS: {message.text_message}")
     json_str = conv.strip('```json\n').strip('```')
 
     print(json_str)
@@ -163,7 +163,6 @@ Ensure all actions comply with data safety and confidentiality standards.
 
                 if key == "AI-Team":
                     res = await second_line_agent(value)
-                    message_history.add_ai_message(res)
                     await execute_message(message)
                     
 

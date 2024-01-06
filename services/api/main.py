@@ -130,9 +130,10 @@ example:
 ### Data Safety Compliance:
 Ensure all actions comply with data safety and confidentiality standards.
 
+**Previous Messages**: `{history}`
 **Event**:`{input}`
 """
-    PROMPT = PromptTemplate(input_variables=["input"], template=template)
+    PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
     
 
@@ -189,6 +190,7 @@ while keeping it maximally dense so he doesn't lose to much time.
 
 Do not generate a title.
 
+**Conversation**: {memory}
 """
 
 

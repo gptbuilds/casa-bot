@@ -173,7 +173,8 @@ async def execute_message(message: Message) -> str:
     await parse_and_switch(json_str, message_history, memory)
     return "Ok"
 
-async def execute_extraction_to_doc(number: str):
+@app.post("/execute_extraction")
+async def execute_extraction_to_doc(number: str) -> str:
     message_history = MongoDBChatMessageHistory(
         connection_string=MONGO_CONN, session_id= number
     )
@@ -192,7 +193,12 @@ Do not generate a title.
 
 **Conversation**: {memory}
 """
+    PROMPT = PromptTemplate(input_variables=["history"], template=template)
+    conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
 
+    conv =  conversation.predict()
+
+    return conv
 
 async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory):
     try:

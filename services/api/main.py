@@ -63,7 +63,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 async def second_line_agent(msg: str) -> str:
-    llm = ChatOpenAI()
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
 
     mongo_tool = MongoDBQueryPropertiesTool()
     specific_address = MongoDBSearchAddressCaseInsensitive()
@@ -72,7 +72,7 @@ async def second_line_agent(msg: str) -> str:
     return await agent_executor.arun(msg)
 
 async def conversational_agent(memory: ConversationBufferMemory, event: str) -> str:
-    llm = ChatOpenAI(temperature=0, model_name="gpt-4")
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
     template = """
 ## Role: SMS Assistant for a Real Estate Agent/Realtor in Vancouver
 - Respond to buyers, sellers and other realtors SMS about real estate.

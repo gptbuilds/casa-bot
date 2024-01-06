@@ -1,93 +1,87 @@
-from langchain_core.tools import BaseTool
-from langchain.document_loaders.mongodb import MongodbLoader
-from pymongo import MongoClient
+import os
+import motor.motor_asyncio
+from typing import Optional, Type
+from pydantic import BaseModel, Field
 
+from langchain.tools import BaseTool
+from pydantic import BaseModel, Field
 
-class MongoDBTool(BaseTool):
-    """
-    A tool for working with MongoDB collections.
-    """
+class MongoDBQuerySchema(BaseModel):
+    query: Optional[dict] = Field(default=None, description="MongoDB query.")
 
-    def __init__(self, connection_string, db_name, collection_name):
-        """
-        Initialize the MongoDBTool.
+class MongoDBQueryPropertiesTool(BaseTool):
+    name: str = "mongo_db_query_properties_tool"
+    description: str = """A tool for performing query operations on the 'properties' collection in MongoDB asynchronously. All properties are in vancouver
+    Use this as backup when other tools are insufficient for the request.
+        Example document:
+            `{{
+                "Address": "1006 13387 OLD YALE ROAD",
+                "S/A": "Whalley",
+                "List Price": "$519,000",
+                "Days On Market": "15",
+                "Tot BR": "1",
+                "Tot Baths": "1",
+                "TotFlArea": "495",
+                "Yr Blt": "2023",
+                "Age": "0",
+                "TotalPrkng": "1",
+                "MaintFee": "$0.00",
+                "TypeDwel": "Apartment/Condo",
+                "_id": "6596c6ce7e7ab29d9c7a2dd6",
+                "id": "6596c6ce7e7ab29d9c7a2dd6"
+            }}`"""
+    args_schema: Type[MongoDBQuerySchema] = MongoDBQuerySchema 
 
-        Args:
-            connection_string (str): The connection string for the MongoDB database.
-            db_name (str): The name of the MongoDB database.
-            collection_name (str): The name of the MongoDB collection.
-        """
-        super(connection_string, db_name).__init__()
-        self.connection_string = connection_string
-        self.db_name = db_name
-        self.collection_name = collection_name
+    async def _arun(
+        self,
+        query: Optional[dict] = None,
+    ) -> dict:
+        """Query the database with your query."""
+        client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_CONNECTION_STRING"))
+        db = client["casa"]
+        collection = db["properties"]
+        documents = await collection.find(query).to_list(length=100)
+        return {"result": documents}
 
-    async def load_documents(self):
-        """
-        Load documents from the MongoDB collection.
+    async def _run(
+        self,
+        query: Optional[dict] = None,
+    ) -> dict:
+        """Not implemented"""
+        raise NotImplementedError("Tool does not support sync")
 
-        Returns:
-            list: The loaded documents.
-        """
-        loader = MongodbLoader(
-            connection_string=self.connection_string,
-            db_name=self.db_name,
-            collection_name=self.collection_name,
-        )
-        return await loader.aload()
+class MongoDBSearchAddressCaseInsensitiveQuerySchema(BaseModel):
+    address_search_string: str = Field(description="An address")
 
-    from pymongo import MongoClient
+class MongoDBSearchAddressCaseInsensitive(BaseTool):
+    name: str = "mongo_db_search_address_tool"
+    description: str = """A tool for searching through the addresses with a string on the 'properties'. Use this when you need to look for a specific address."""
+    args_schema: Type[MongoDBSearchAddressCaseInsensitiveQuerySchema] = MongoDBSearchAddressCaseInsensitiveQuerySchema
 
-    async def insert_documents(self, documents):
-        """
-        Insert documents into the MongoDB collection.
+    async def _arun(
+        self,
+        address_search_string: str,
+    ) -> dict:
+        """Find properties with a similar address"""
+        client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_CONNECTION_STRING"))
+        db = client["casa"]
+        collection = db["properties"]
 
-        Args:
-        documents (list): The documents to insert.
-        """
-        client = MongoClient(self.connection_string)
-        db = client[self.db_name]
-        collection = db[self.collection_name]
-        collection.insert_many(documents)
+        query = {
+            "Address": {
+                "$regex": address_search_string,
+                "$options": "i"  # Case-insensitive search
+            }
+        }
 
-    async def update_documents(self, filter, update):
-        """
-        Update documents in the MongoDB collection.
+        documents = await collection.find(query).to_list(length=100)
 
-        Args:
-            filter (dict): The filter to match documents for update.
-            update (dict): The update object.
-        """
-        client = MongoClient(self.connection_string)
-        db = client[self.db_name]
-        collection = db[self.collection_name]
-        collection.update_many(filter, update)
-    
-    async def delete_documents(self, filter):
-        """
-        Delete documents from the MongoDB collection.
+        return {"result": documents}
 
-        Args:
-            filter (dict): The filter to match documents for deletion.
-        """
-        client = MongoClient(self.connection_string)
-        db = client[self.db_name]
-        collection = db[self.collection_name]
-        collection.delete_many(filter)
+    async def _run(
+        self,
+        address_search_string: str,
+    ) -> dict:
+        """Not implemented"""
+        raise NotImplementedError("Tool does not support sync")
 
-    async def query_documents(self, query):
-        """
-        Query documents from the MongoDB collection.
-
-        Args:
-            query (dict): The query object.
-
-        Returns:
-            list: The matching documents.
-        """
-        client = MongoClient(self.connection_string)
-        db = client[self.db_name]
-        collection = db[self.collection_name]
-        result = collection.find(query)
-
-        return list(result)

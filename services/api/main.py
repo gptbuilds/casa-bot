@@ -191,12 +191,13 @@ while keeping it maximally dense so he doesn't lose to much time.
 
 Do not generate a title.
 
+{input}
 **Conversation**: {history}
 """
-    PROMPT = PromptTemplate(input_variables=["history"], template=template)
+    PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
 
-    conv =  conversation.predict()
+    conv =  conversation.predict(input="Generate summary of the conversation:")
 
     return conv
 

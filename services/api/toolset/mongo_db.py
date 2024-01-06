@@ -87,12 +87,12 @@ class MongoDBSearchAddressCaseInsensitive(BaseTool):
         raise NotImplementedError("Tool does not support sync")
 
 class AvailableDatesQuerySchema(BaseModel):
-    address_search_string: str = Field(description="A date")
+    date: str = Field(description="A date")
 
 class GetAvailableDatesRealtorAgenda(BaseTool):
     name: str = "get_available_dates_realtor_agenda"
     description: str = """A tool for getting the available dates from the realtor's agenda, will give you the available slots for the date"""
-    args_schema: Type[MongoDBSearchAddressCaseInsensitiveQuerySchema] = MongoDBSearchAddressCaseInsensitiveQuerySchema
+    args_schema: Type[AvailableDatesQuerySchema] = AvailableDatesQuerySchema
 
     async def _arun(
         self,

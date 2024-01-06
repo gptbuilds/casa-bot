@@ -14,7 +14,7 @@ from langchain.chains import ConversationChain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents import load_tools, initialize_agent, AgentType
 
-from toolset.mongo_db import MongoDBQueryPropertiesTool, MongoDBSearchAddressCaseInsensitive
+from toolset.mongo_db import MongoDBQueryPropertiesTool, MongoDBSearchAddressCaseInsensitive, GetAvailableDatesRealtorAgenda 
 
 from twilio.request_validator import RequestValidator
 
@@ -68,7 +68,8 @@ async def second_line_agent(msg: str) -> str:
 
     mongo_tool = MongoDBQueryPropertiesTool()
     specific_address = MongoDBSearchAddressCaseInsensitive()
-    agent_executor = initialize_agent([mongo_tool, specific_address], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+    get_schedule = GetAvailableDatesRealtorAgenda()
+    agent_executor = initialize_agent([mongo_tool, specific_address, get_schedule], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
     return await agent_executor.arun(msg)
 
@@ -129,10 +130,9 @@ example:
 ### Data Safety Compliance:
 Ensure all actions comply with data safety and confidentiality standards.
 
-**Previous Messages**: `{history}`
 **Event**:`{input}`
 """
-    PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
+    PROMPT = PromptTemplate(input_variables=["input"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)
     
 
@@ -144,6 +144,16 @@ Ensure all actions comply with data safety and confidentiality standards.
     return json_str
 
 
+async def mongo_to_buffer_mem(message_history) -> ConversationBufferMemory:
+    memory = ConversationBufferMemory()
+
+    for i in range(0, len(message_history.messages), 2):
+        if i + 1 < len(message_history.messages):
+            memory.save_context(
+                                {"client": message_history.messages[i].content}, 
+                                {"sms-assistant": message_history.messages[i +  1].content}
+            )
+    return memory
 
 async def execute_message(message: Message) -> str:
     ### Not Async Will cause trouble in future
@@ -155,22 +165,32 @@ async def execute_message(message: Message) -> str:
         message_history.clear()
         return "Memory cleared" 
 
-    memory = ConversationBufferMemory()
+    memory = await mongo_to_buffer_mem(message_history)
 
-    for i in range(0, len(message_history.messages), 2):
-        if i + 1 < len(message_history.messages):
-            memory.save_context(
-                                {"client": message_history.messages[i].content}, 
-                                {"sms-assistant": message_history.messages[i +  1].content}
-            )
-    
     json_str = await conversational_agent(memory, f"New SMS: {message.text_message}")
     message_history.add_user_message(message.text_message)
     await parse_and_switch(json_str, message_history, memory)
     return "Ok"
 
 async def execute_extraction_to_doc(number: str):
-    print("Not Implemented")
+    message_history = MongoDBChatMessageHistory(
+        connection_string=MONGO_CONN, session_id= number
+    )
+
+    memory = await mongo_to_buffer_mem(message_history)
+
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4-1106-preview")
+    template = """You are a conversation summarizer. 
+
+Your job is summarizing the conversation between a real estate client and a realtor's
+sms smart assistant. Use markdown so the realtor can read the conversation the 
+chatbot had with his client. Make it as easy as possible for the realtor to read
+while keeping it maximally dense so he doesn't lose to much time.
+
+Do not generate a title.
+
+"""
+
 
 async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory):
     try:

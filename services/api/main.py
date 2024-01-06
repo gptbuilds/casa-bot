@@ -174,9 +174,9 @@ async def execute_message(message: Message) -> str:
     return "Ok"
 
 @app.post("/execute_extraction")
-async def execute_extraction_to_doc(number: str) -> str:
+async def execute_extraction_to_doc(phone_number: str) -> str:
     message_history = MongoDBChatMessageHistory(
-        connection_string=MONGO_CONN, session_id= number
+        connection_string=MONGO_CONN, session_id= phone_number
     )
 
     memory = await mongo_to_buffer_mem(message_history)
@@ -191,7 +191,7 @@ while keeping it maximally dense so he doesn't lose to much time.
 
 Do not generate a title.
 
-**Conversation**: {memory}
+**Conversation**: {history}
 """
     PROMPT = PromptTemplate(input_variables=["history"], template=template)
     conversation = ConversationChain(llm=llm, verbose=False, prompt=PROMPT, memory=memory)

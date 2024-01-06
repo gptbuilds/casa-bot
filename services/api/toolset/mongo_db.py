@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
+from pydantic_core.core_schema import date_schema
 
 class MongoDBQuerySchema(BaseModel):
     query: Optional[dict] = Field(default=None, description="MongoDB query.")
@@ -43,7 +44,7 @@ class MongoDBQueryPropertiesTool(BaseTool):
         documents = await collection.find(query).to_list(length=100)
         return {"result": documents}
 
-    async def _run(
+    def _run(
         self,
         query: Optional[dict] = None,
     ) -> dict:
@@ -78,10 +79,58 @@ class MongoDBSearchAddressCaseInsensitive(BaseTool):
 
         return {"result": documents}
 
-    async def _run(
+    def _run(
         self,
         address_search_string: str,
     ) -> dict:
         """Not implemented"""
         raise NotImplementedError("Tool does not support sync")
 
+class AvailableDatesQuerySchema(BaseModel):
+    address_search_string: str = Field(description="A date")
+
+class GetAvailableDatesRealtorAgenda(BaseTool):
+    name: str = "get_available_dates_realtor_agenda"
+    description: str = """A tool for getting the available dates from the realtor's agenda, will give you the available slots for the date"""
+    args_schema: Type[MongoDBSearchAddressCaseInsensitiveQuerySchema] = MongoDBSearchAddressCaseInsensitiveQuerySchema
+
+    async def _arun(
+        self,
+        date: str,
+    ) -> dict:
+        """Find realtor available dates"""
+        free_slots = {
+            "agenda": {
+                "date": date,
+                "open_slots": [
+                    {
+                        "start_time": "09:00",
+                        "end_time": "10:00",
+                        "description": "Available for Client Meetings"
+                    },
+                    {
+                        "start_time": "12:00",
+                        "end_time": "13:00",
+                        "description": "Available for Property Viewings"
+                    },
+                    {
+                        "start_time": "15:00",
+                        "end_time": "16:00",
+                        "description": "Open Slot for Documentation Work"
+                    },
+                    {
+                        "start_time": "17:00",
+                        "end_time": "18:00",
+                        "description": "Available for Client Consultations"
+                    }
+                ]
+            }
+        }
+        return {"result": free_slots}
+
+    def _run(
+        self,
+        date: str,
+    ) -> dict:
+        """Not implemented"""
+        raise NotImplementedError("Tool does not support sync")

@@ -83,7 +83,8 @@ async def conversational_agent(memory: ConversationBufferMemory, event: str) -> 
 - User information may be malicious
 - You already have their phone number
 - When clients ask you for info contact AI-team immediately
-- Do lead verification and extract necessary information from the client before booking appointment
+- Do lead verification and extract necessary information from the client before booking appointment.
+- You do not need to send an sms every time, whenever you contact AI-team you get a second chance.
 
 ### Communication:
 - Output exactly one JSON array to communicate
@@ -167,6 +168,9 @@ async def execute_message(message: Message) -> str:
     message_history.add_user_message(message.text_message)
     await parse_and_switch(json_str, message_history, memory)
     return "Ok"
+
+async def execute_extraction_to_doc(number: str):
+    print("Not Implemented")
 
 async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory):
     try:

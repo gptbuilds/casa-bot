@@ -1,5 +1,6 @@
 import fastapi
 import json
+import asyncio
 import os
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
@@ -170,6 +171,8 @@ async def execute_message(message: Message) -> str:
 async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory):
     try:
         json_obj = json.loads(json_str)
+        tasks = []
+
         for entry in json_obj:
             for key, value in entry.items():
                 if key == "Client":
@@ -177,16 +180,20 @@ async def parse_and_switch(json_str: str, message_history, memory: ConversationB
                     message_history.add_ai_message(value)
 
                 if key == "Realtor":
-                    await alert_realtor(value)
+                    task = asyncio.create_task(alert_realtor(value))
+                    tasks.append(task)
 
                 if key == "AI-Team":
-                    res_second_line = await second_line_agent(value)
-                    res_conv = await conversational_agent(memory, f"AI-Team Response: {res_second_line}")
-                    await parse_and_switch(res_conv, message_history, memory)
-        
-                    
+                    task = asyncio.create_task(handle_ai_team(value, message_history, memory))
+                    tasks.append(task)
+
     except json.JSONDecodeError as e:
         print("Invalid JSON:", e)       
         await alert_realtor(json_str)
         await alert_client("Sorry something went wrong, we are looking into it, is there anything else I can help you with")
         return ["error  invalid json"]
+
+async def handle_ai_team(value, message_history, memory):
+    res_second_line = await second_line_agent(value)
+    res_conv = await conversational_agent(memory, f"AI-Team Response: {res_second_line}")
+    await parse_and_switch(res_conv, message_history, memory)

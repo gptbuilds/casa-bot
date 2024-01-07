@@ -174,7 +174,7 @@ async def execute_message(message: Message) -> list[str]:
 
     json_str = await conversational_agent(memory, f"New SMS: {message.text_message}")
     message_history.add_user_message(message.text_message)
-    let out = await parse_and_switch(json_str, message_history, memory)
+    out = await parse_and_switch(json_str, message_history, memory)
     return out
 
 @app.post("/execute_extraction")

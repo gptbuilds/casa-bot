@@ -46,9 +46,13 @@ async def incoming_sms_hook(request: Request):
 
     return "Ok"
 
+@app.post("/voiceflow")
+async def voiceflow(message: Message) -> list[str]:
+    return await execute_message(message)
+
 # This will be removed once we go live
 @app.post("/only-for-testing-agent")
-async def only_for_testing_agent(wrap: TestWrap) -> str:
+async def only_for_testing_agent(wrap: TestWrap) -> list[str]:
     if wrap.password == "BadMotherfucker":
         return await execute_message(wrap.message);
     else:
@@ -156,7 +160,7 @@ async def mongo_to_buffer_mem(message_history) -> ConversationBufferMemory:
             )
     return memory
 
-async def execute_message(message: Message) -> str:
+async def execute_message(message: Message) -> list[str]:
     ### Not Async Will cause trouble in future
     message_history = MongoDBChatMessageHistory(
         connection_string=MONGO_CONN, session_id= message.phone_number
@@ -164,14 +168,14 @@ async def execute_message(message: Message) -> str:
 
     if message.text_message == "Restart":
         message_history.clear()
-        return "Memory cleared" 
+        return ["Memory cleared"]
 
     memory = await mongo_to_buffer_mem(message_history)
 
     json_str = await conversational_agent(memory, f"New SMS: {message.text_message}")
     message_history.add_user_message(message.text_message)
-    await parse_and_switch(json_str, message_history, memory)
-    return "Ok"
+    let out = await parse_and_switch(json_str, message_history, memory)
+    return out
 
 @app.post("/execute_extraction")
 async def execute_extraction_to_doc(phone_number: str) -> str:
@@ -201,14 +205,16 @@ Do not generate a title.
 
     return conv
 
-async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory):
+async def parse_and_switch(json_str: str, message_history, memory: ConversationBufferMemory) -> list[str]:
     try:
         json_obj = json.loads(json_str)
         tasks = []
+        out = []
 
         for entry in json_obj:
             for key, value in entry.items():
                 if key == "Client":
+                    out.append(value)
                     await alert_client(value)
                     message_history.add_ai_message(value)
 
@@ -219,6 +225,10 @@ async def parse_and_switch(json_str: str, message_history, memory: ConversationB
                 if key == "AI-Team":
                     task = asyncio.create_task(handle_ai_team(value, message_history, memory))
                     tasks.append(task)
+
+        await asyncio.gather(*tasks)
+
+        return out
 
     except json.JSONDecodeError as e:
         print("Invalid JSON:", e)       
